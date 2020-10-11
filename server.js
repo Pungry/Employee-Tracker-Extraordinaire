@@ -96,9 +96,80 @@ function sendEmployee() {
 }
 //Ask user info on what employee they want to add; first name, last name, role id, manager id (if they have one); send info to another function to actually add employee to database; take back to start
 function addEmployee() {
-    console.log("You're adding an employee");
+    inquirer.prompt([
+        {
+            name: "firstName",
+            message: "What is the first name of the employee you wish to add?",
+            type: "input"
+        },
+        {
+            name: "lastName",
+            message: "What is the last name of the employee you wish to add?",
+            type: "input"
+        },
+        {
+            name: "title",
+            message: "What is the job title of the employee you wish to add?",
+            type: "input"
+        },
+        {
+            name: "salary",
+            message: "What is the salary of the employee you wish to add? Give the answer in the form of a decimal.",
+            type: "input",
+            validate: function(value) {
+                if (isNaN(value) === false) {
+                  return true;
+                }
+                return false;
+              }
+        },
+        {
+            name: "department",
+            message: "What department is the employee in?",
+            type: "input"
+        }
+    ]).then(function(response){
+        if (response.firstName === '')
+        {
+        console.log("Please provide a first name.");
+        addEmployee();
+        }
+        else if (response.lastName === '')
+        {
+        console.log("Please provide a last name.");
+        addEmployee();
+        }
+        else if (response.title === '')
+        {
+        console.log("Please provide a job title.");
+        addEmployee();
+        }
+        else if (response.department === '')
+        {
+        console.log("Please provide a department.");
+        addEmployee();
+        }
+        newEmployee(response);
+    })
 }
-//Ask user what the first name and last name of employee they want to edit is, then how they want to update the info; send new info to another function to actually add employee to database; take back to start
+//expects an object passed through, then adds all the stuff in
+function newEmployee(employee) {
+    console.log("adding employee");
+    console.log(employee);
+    // connection.query(
+    //     "INSERT INTO department SET ?"
+    // )
+}
+//Ask user what the id of employee they want to edit is, then how they want to update the info; send new info to another function to actually add employee to database; take back to start
 function editEmployee() {
-    console.log("You're editing an employee's info");
+    inquirer.prompt([
+        {
+            name: "id",
+            message: "What is the id of the employee with info you wish to edit?",
+            type: "input"
+        }
+    ]).then(function(response){
+        console.log(response);
+        //Check responses given with the database; then ask them if the employee found is the right one, then let them make edits; have to connect to database, select all, loop through them, then ask if that's correct
+    })
 }
