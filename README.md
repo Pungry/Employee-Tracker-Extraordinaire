@@ -1,5 +1,4 @@
 # Employee Tracker Extraordinaire
-# Team Profile Generator
 [Description](#description) 
 
 [Installation](#installation)
