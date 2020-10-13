@@ -46,15 +46,15 @@ function viewDatabase() {
         {
             name: "sortDB",
             type: "list",
-            choices: ["By Employee", "By Department", "By Role", "Back"],
+            choices: ["All Employees", "All Departments", "All Roles", "Back"],
             message: "How would you like to view the database?"
         }
     ]).then(function(answer){
-        if (answer.sortDB === "By Employee")
+        if (answer.sortDB === "All Employees")
         {viewEmployee();}
-        else if (answer.sortDB === "By Department")
+        else if (answer.sortDB === "All Departments")
         {viewDepartment();}
-        else if (answer.sortDB === "By Role")
+        else if (answer.sortDB === "All Roles")
         {viewRole();}
         else if (answer.sortDB === "Back")
         {initialPrompt();}
@@ -70,7 +70,7 @@ function viewEmployee() {
 }
 
 function viewDepartment() {
-    connection.query('SELECT dName AS "Department", title AS "Job Title", first_name AS "First Name", last_name AS "Last Name", salary AS "Salary" FROM ((employee JOIN roles ON employee.role_id = roles.id) JOIN department ON roles.department_id = department.id)', function(err, data){
+    connection.query('SELECT dName AS "Department" FROM department', function(err, data){
         if (err) {throw err;}
         console.table(data);
         initialPrompt();
@@ -78,7 +78,7 @@ function viewDepartment() {
 }
 
 function viewRole() {
-    connection.query('SELECT title AS "Job Title", first_name AS "First Name", last_name AS "Last Name", salary AS "Salary", dName AS "Department" FROM ((employee JOIN roles ON employee.role_id = roles.id) JOIN department ON roles.department_id = department.id)', function(err, data){
+    connection.query('SELECT title AS "Roles" FROM roles', function(err, data){
         if (err) {throw err;}
         console.table(data);
         initialPrompt();
