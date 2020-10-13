@@ -113,7 +113,7 @@ function sendEmployee() {
             choices: ["Add New Employee", "Edit Employee", "Back"]
         }
     ]).then(function(answer){
-        if (answer.addOrUpdate === "Add Employee")
+        if (answer.addOrUpdate === "Add New Employee")
         {
             addEmployee();
         }
@@ -175,166 +175,174 @@ function sendDepartment() {
 }
 //Ask user info on what employee they want to add; first name, last name, role id, manager id (if they have one); send info to another function to actually add employee to database; take back to start
 function addEmployee() {
-    inquirer.prompt([
-        {
+    connection.query("SELECT * FROM roles JOIN department ON roles.department_id = department.id", function(err, data) {
+        if (err) {throw err;}
+        inquirer.prompt([
+            {
             name: "firstName",
             message: "What is the first name of the employee you wish to add?",
             type: "input"
-        },
-        {
+            },
+            {
             name: "lastName",
             message: "What is the last name of the employee you wish to add?",
             type: "input"
-        },
-        {
-            name: "salary",
-            message: "What is the salary of the employee you wish to add? Give the answer in the form of a decimal.",
-            type: "input",
-            validate: function(value) {
-                if (isNaN(value) === false) {
-                  return true;
-                }
-                return false;
-              }
-        },
-        {
-            //list of limited department options/types
-            name: "department",
-            message: "What department is the employee in?",
-            type: "rawlist",
-            //Want the choices to be the array of departments
-            choices: ["Marketing", "Executive", "Programming", "Human Resources", "New"]
-        },
-        {
-            //list of limited employee options/types
-            name: "title",
-            message: "What is the job title of the employee you wish to add?",
-            type: "rawlist",
-            //Want the choices to be the array of titles
-            choices: ["Marketer", "Salesman", "CEO", "Executive", "Programmer", "Junior Programmer", "Staffing Coordinator", "HR Manager", "New"]
-        }
-    ]).then(function(response){
-        if (response.firstName === '')
-        {
-        console.log("Please provide a first name.");
-        addEmployee();
-        }
-        else if (response.lastName === '')
-        {
-        console.log("Please provide a last name.");
-        addEmployee();
-        }
-        newEmployee(response);
+            },
+            {
+                name: "roleName",
+                type: "rawlist",
+                message: "Please select the role the employee you are adding will have:",
+                choices: function () {
+                    const choicesArray = []
+                    for (let i = 0; i < data.length; i++) 
+                        {
+                        choicesArray.push(data[i].title)
+                        }
+                    return choicesArray
+                    }
+            }
+        ]).then(({firstName, lastName, roleName}) => {
+            //Need to get the department id from the results array and insert that into the object
+            const [foundRole] = data.filter(role => role.title === roleName);
+            connection.query("INSERT INTO employee SET ?", {
+                first_name: firstName,
+                last_name: lastName,
+                role_id: foundRole.id
+            }, (err, results) => {
+                if (err) throw err
+                console.log("======================")
+                console.log("Added new employee.")
+                console.log("======================")
+                initialPrompt();
+            })
+        })
     })
 }
-//expects an object passed through, then adds a new employee based on the answers
-function newEmployee(employee) {
-    console.log("adding employee");
-    //Make employee a new employee object, push it into the array of employees, then add employee into SQL db using the data provided 
-    //let role_id = connection.query("SELECT id FROM roles WHERE role.title = employee.title")
-    console.log(employee);
-    // connection.query(
-    //     "INSERT INTO department SET ?", 
-                //{
-                    //first_name = employee.firstName,
-                    //last_name = employee.lastName
-                //},
-                //function(err) {
-                    //if(err)
-                //     {
-                //         throw err;
-                //     }
-                // }
-    // )
-    // connection.query(
-        //"INSERT INTO roles SET ?",
-        //{
-            //title = employee.title,
-            //salary == employee.salary
-        //},
-        //function(err) {
-            //if (err)
-        //     {
-        //         throw err;
-        //     }
-        // }
-    //)
-    //connection.query(
-        //"INSERT INTO department SET ?",
-    //     {
-    //         dName = "Marketing",
-            //
-    //     },
-    //     function(err)
-    //     {
-    //         if (err)
-    //         {
-    //             throw err;
-    //         }
-    //     }
-    // )
-}
-//JUST STEAL FROM greatBayBasic.js bidAuction() FUNCTION!!!!!
+
 function editEmployee() {
-    inquirer.prompt([
-        {
-            name: "id",
-            message: "What is the id of the employee with info you wish to edit?",
-            type: "input"
-        }
-    ]).then(function(response){
-        console.log(response);
-        //Check responses given with the database; then ask them if the employee found is the right one, then let them make edits; have to connect to database, select all, loop through them, then ask if that's correct
+    connection.query("SELECT * FROM employee JOIN roles ON employee.role_id = roles.id", function (err, results)
+    {
+        console.log(results);
+        if (err) {throw err;}
+        inquirer.prompt([
+            {
+                type: "rawlist",
+                name: "empList",
+                message: "Please select the last name of the Employee to edit:",
+                choices: function () {
+                const choicesArray = []
+                for (let i = 0; i < results.length; i++)
+                    {
+                    choicesArray.push(results[i].last_name)
+                    }
+                return choicesArray}
+            },
+            {
+                type: "text",
+                name: "newFirst",
+                message: "What do you wish to change this employee's first name to?"
+            },
+            {
+                type: "text",
+                name: "newLast",
+                message: "What do you wish to change this employee's last name to?"
+            }
+        ]).then(function(response){
+            console.log(response);
+            const [foundName] = results.filter(last_name => results.last_name === response.last_name);
+            console.log(foundName);
+            connection.query("UPDATE employee SET ?, ? WHERE ?", [{first_name: response.newFirst}, {last_name: response.newLast}, {id: foundName.id}], function(err, data)
+            {
+                if (err) {throw err;}
+                console.log("Updated");
+                initialPrompt();
+            })
+        })
     })
 }
 
 function addRole() {
     console.log("Adding role");
-    //Make role a new role object, push it into the array of role, then add role into SQL db using the data provided
-    //Ask "what is the name of the new role?", "what is its salary?", "what department is it in?" (give list of departments here)
-    //Look at how Denis does it I guess :(
     //https://github.com/D-Molloy/sql-join-inquirer
-    // const createBook = () => {
-    //     connection.query("SELECT * FROM authors", (err, results) => {
-    //         if (err) throw err
-    //         // console.log('author results', results)
-    //         inquirer.prompt([{
-    //             type: "text",
-    //             name: "bookName",
-    //             message: "Please enter the name of the book:"
-    //         }, {
-    //             type: "rawlist",
-    //             name: "bookAuthor",
-    //             message: "Please select the book's author:",
-    //             choices: function () {
-    //                 const choicesArray = []
-    //                 for (let i = 0; i < results.length; i++) {
-    //                     choicesArray.push(results[i].firstName + " " + results[i].lastName)
-    //                 }
-    //                 return choicesArray
-    //             }
-    //         }]).then(({ bookName, bookAuthor }) => {
-    //             const [firstName, lastName] = bookAuthor.split(" ")
-    //             const [foundAuthor] = results.filter(author => author.firstName === firstName && author.lastName === lastName)
+        connection.query("SELECT * FROM department", (err, results) => {
+            if (err) throw err
+            // console.log('author results', results)
+            inquirer.prompt([{
+                type: "text",
+                name: "roleName",
+                message: "Please enter the name of the new role:"
+            }, 
+            {
+                type: "number",
+                name: "salary",
+                message: "What is the salary of the new role? In decimal form."
+            },
+            {
+                type: "rawlist",
+                name: "depName",
+                message: "Please select the department of which this role is for:",
+                choices: function () {
+                    const choicesArray = []
+                    for (let i = 0; i < results.length; i++) {
+                        choicesArray.push(results[i].dName)
+                    }
+                    return choicesArray
+            }
+            }]).then(({roleName, salary, depName}) => {
+                //Need to get the department id from the results array and insert that into the object
+                const [foundDep] = results.filter(department => department.dName === depName);
+                connection.query("INSERT INTO roles SET ?", {
+                    title: roleName,
+                    salary: salary,
+                    department_id: foundDep.id
+                }, (err, results) => {
+                    if (err) throw err
+                    console.log("======================")
+                    console.log("Added new role.")
+                    console.log("======================")
+                    initialPrompt();
+                })
     
-    //             connection.query("INSERT INTO books SET ?", {
-    //                 title: bookName,
-    //                 authorId: foundAuthor.id
-    //             }, (err, results) => {
-    //                 if (err) throw err
-    //                 console.log("======================")
-    //                 console.log("Book Added")
-    //                 console.log("======================")
-    //                 setTimeout(mainMenu, 2000)
-    //             })
-    
-    //         })
-    //     })
-    // }
+        })
+    })
 }
 
 function editRole() {
-    console.log("Editing role");
+    connection.query("SELECT title, salary FROM roles", function (err, results)
+    {
+        if (err) {throw err;}
+        inquirer.prompt([
+            {
+                type: "rawlist",
+                name: "roleList",
+                message: "Please select the role to edit:",
+                choices: function () {
+                const choicesArray = []
+                for (let i = 0; i < results.length; i++)
+                    {
+                    choicesArray.push(results[i].title)
+                    }
+                return choicesArray}
+            },
+            {
+                type: "text",
+                name: "newName",
+                message: "What do you wish to change this role's name to?"
+            },
+            {
+                type: "number",
+                name: "newSal",
+                message: "How much is the salary of this role? Give the answer in the form of a decimal."
+            }
+        ]).then(function(response){
+            connection.query("UPDATE roles SET ?, ? WHERE ?", [{title: response.newName}, {salary: response.newSal}, {title: response.roleList}], function(err, data)
+            {
+                if (err) {throw err;}
+                console.log("Updated");
+                initialPrompt();
+            })
+        })
+    })
 }
 
 function addDepartment() {
