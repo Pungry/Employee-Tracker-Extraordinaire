@@ -220,9 +220,8 @@ function addEmployee() {
 }
 
 function editEmployee() {
-    connection.query("SELECT * FROM employee JOIN roles ON employee.role_id = roles.id", function (err, results)
+    connection.query("SELECT * FROM ((employee JOIN roles ON employee.role_id = roles.id) JOIN department ON roles.department_id = department.id)", function (err, results)
     {
-        console.log(results);
         if (err) {throw err;}
         inquirer.prompt([
             {
@@ -246,12 +245,27 @@ function editEmployee() {
                 type: "text",
                 name: "newLast",
                 message: "What do you wish to change this employee's last name to?"
+            },
+            {
+                name: "roleName",
+                type: "rawlist",
+                message: "Please select the role the new role of the employee:",
+                choices: function () {
+                    const choicesArray = []
+                    for (let i = 0; i < results.length; i++) 
+                        {
+                        choicesArray.push(results[i].title)
+                        }
+                    return choicesArray
+                    }
             }
         ]).then(function(response){
             console.log(response);
             const [foundName] = results.filter(last_name => results.last_name === response.last_name);
+            const [foundID] = results.filter(role => results.roleName === response.title);
             console.log(foundName);
-            connection.query("UPDATE employee SET ?, ? WHERE ?", [{first_name: response.newFirst}, {last_name: response.newLast}, {id: foundName.id}], function(err, data)
+            console.log(foundID);
+            connection.query("UPDATE employee SET ?, ?, ? WHERE ?", [{first_name: response.newFirst}, {last_name: response.newLast}, {role_id: foundID.id}, {id: foundName.id}], function(err, data)
             {
                 if (err) {throw err;}
                 console.log("Updated");
