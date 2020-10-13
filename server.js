@@ -78,7 +78,7 @@ function viewDepartment() {
 }
 
 function viewRole() {
-    connection.query('SELECT title AS "Roles" FROM roles', function(err, data){
+    connection.query('SELECT title AS "Roles", dName AS "Department" FROM roles JOIN department ON roles.department_id = department.id', function(err, data){
         if (err) {throw err;}
         console.table(data);
         initialPrompt();
